@@ -1,20 +1,19 @@
 {
-  "name": "electron-hello-world",
+  "name": "apple-container-desktop",
   "version": "1.0.0",
-  "description": "A simple Hello World Electron app",
+  "description": "A GUI for Apple Container — manage Linux containers on macOS",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc",
     "start": "npm run build && electron .",
     "dev": "npm run build && electron . --dev"
   },
-  "keywords": ["electron", "hello-world"],
+  "keywords": ["electron", "container", "macos"],
   "author": "",
   "license": "MIT",
   "devDependencies": {
     "electron": "42.2.0",
     "typescript": "6.0.3",
-    "@types/node": "25.9.1",
-    "@types/electron": "1.6.12"
+    "@types/node": "25.9.1"
   }
 }

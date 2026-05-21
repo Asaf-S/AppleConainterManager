@@ -1,48 +1,423 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Electron Hello World</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-        background: #fafafa;
-      }
-      .card {
-        text-align: center;
-        border: 1px solid #ddd;
-        border-radius: 12px;
-        padding: 32px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-        background: white;
-      }
-      h1 {
-        margin: 0 0 16px;
-        color: #222;
-      }
-      p {
-        margin: 0;
-        color: #555;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      <h1>Hello World</h1>
-      <p>Welcome to your Electron app.</p>
-      <p id="preload-message"></p>
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apple Container Desktop</title>
+  <link rel="stylesheet" href="renderer/styles.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ─── Titlebar ──────────────────────────────────────────────────────── -->
+  <div id="titlebar">
+    <h1>Apple Container Desktop</h1>
+    <div id="system-status">
+      <span id="status-dot"></span>
+      <span id="status-label">Checking…</span>
+      <button id="start-btn" class="btn-system">Start System</button>
+      <button id="stop-btn" class="btn-system danger" style="display:none">Stop System</button>
+    </div>
+    <button id="settings-btn" title="Settings">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- ─── State overlays ────────────────────────────────────────────────── -->
+  <div id="exec-missing">
+    <div class="missing-icon">📦</div>
+    <h2>Container CLI Not Found</h2>
+    <p>The <code>container</code> executable was not found at the expected path. Please install it or set a custom path in Settings.</p>
+    <button class="btn primary" onclick="document.getElementById('settings-btn').click()">Open Settings</button>
+  </div>
+
+  <div id="system-stopped">
+    <div class="stopped-icon">⏸</div>
+    <h2>System Not Running</h2>
+    <p>The container system is not running. Start it to manage images, containers and volumes.</p>
+    <button class="btn primary" id="start-btn-overlay">Start System</button>
+  </div>
+
+  <!-- ─── Main content ──────────────────────────────────────────────────── -->
+  <div id="content">
+    <!-- Tab bar -->
+    <div id="tab-bar">
+      <button class="tab-btn active" data-tab="images">Images</button>
+      <button class="tab-btn" data-tab="containers">Containers</button>
+      <button class="tab-btn" data-tab="volumes">Volumes</button>
     </div>
 
-    <script>
-      const message = window.electronAPI?.hello?.();
-      document.getElementById('preload-message').textContent = message || '';
-    </script>
-  </body>
+    <!-- ─── Images tab ──────────────────────────────────────────────────── -->
+    <div id="panel-images" class="tab-panel active">
+      <div class="toolbar">
+        <button class="btn primary" id="pull-btn">↓ Pull</button>
+        <button class="btn" id="build-btn">⚙ Build</button>
+        <button class="btn" id="load-btn">📂 Load</button>
+        <button class="btn" id="save-images-btn" disabled>💾 Save</button>
+        <button class="btn danger" id="del-images-btn" disabled>🗑 Delete</button>
+        <div class="toolbar-right">
+          <div class="search-wrap">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input id="search-images" class="search-input" type="text" placeholder="Search…">
+          </div>
+          <span class="last-updated" id="images-updated"></span>
+          <button class="btn icon-only" id="refresh-images-btn" title="Refresh">↺</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="check-col"></th>
+              <th>Name</th>
+              <th>Tag</th>
+              <th>Digest</th>
+              <th>Size</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="images-tbody">
+            <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-secondary)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:6px 16px;font-size:11px;color:var(--text-secondary);border-top:1px solid var(--border);background:var(--surface)">
+        <span id="images-count"></span>
+      </div>
+    </div>
+
+    <!-- ─── Containers tab ──────────────────────────────────────────────── -->
+    <div id="panel-containers" class="tab-panel">
+      <div class="toolbar">
+        <button class="btn primary" id="create-container-btn">+ Create</button>
+        <button class="btn danger" id="del-containers-btn" disabled>🗑 Delete</button>
+        <button class="btn" id="stop-containers-btn" disabled>⏹ Stop</button>
+        <label style="margin-left:8px;font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" id="toggle-running"> Running only
+        </label>
+        <div class="toolbar-right">
+          <div class="search-wrap">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input id="search-containers" class="search-input" type="text" placeholder="Search…">
+          </div>
+          <span class="last-updated" id="containers-updated"></span>
+          <button class="btn icon-only" id="refresh-containers-btn" title="Refresh">↺</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="check-col"></th>
+              <th>Name</th>
+              <th>Image</th>
+              <th>Ports</th>
+              <th>OS</th>
+              <th>Arch</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="containers-tbody">
+            <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-secondary)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:6px 16px;font-size:11px;color:var(--text-secondary);border-top:1px solid var(--border);background:var(--surface)">
+        <span id="containers-count"></span>
+      </div>
+    </div>
+
+    <!-- ─── Volumes tab ──────────────────────────────────────────────────── -->
+    <div id="panel-volumes" class="tab-panel">
+      <div class="toolbar">
+        <button class="btn primary" id="create-volume-btn">+ Create</button>
+        <button class="btn danger" id="del-volumes-btn" disabled>🗑 Delete</button>
+        <div class="toolbar-right">
+          <div class="search-wrap">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input id="search-volumes" class="search-input" type="text" placeholder="Search…">
+          </div>
+          <span class="last-updated" id="volumes-updated"></span>
+          <button class="btn icon-only" id="refresh-volumes-btn" title="Refresh">↺</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="check-col"></th>
+              <th>Name</th>
+              <th>Driver</th>
+              <th>Size</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="volumes-tbody">
+            <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-secondary)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:6px 16px;font-size:11px;color:var(--text-secondary);border-top:1px solid var(--border);background:var(--surface)">
+        <span id="volumes-count"></span>
+      </div>
+    </div>
+  </div><!-- #content -->
+
+</div><!-- #app -->
+
+<!-- ─── Modals ─────────────────────────────────────────────────────────────── -->
+
+<!-- Pull image -->
+<div id="pull-modal" class="modal-backdrop">
+  <div class="modal">
+    <h2>Pull Remote Image</h2>
+    <form id="pull-form">
+      <div class="modal-section">
+        <label>Image Reference</label>
+        <input id="pull-ref" type="text" placeholder="e.g. alpine:latest, docker.io/library/ubuntu:22.04" required>
+        <span class="hint">Specify a full registry reference</span>
+      </div>
+      <div class="modal-section">
+        <label>Platform (optional)</label>
+        <input id="pull-platform" type="text" placeholder="e.g. linux/arm64">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="pull-modal">Cancel</button>
+        <button type="submit" class="btn primary">Pull</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Build image -->
+<div id="build-modal" class="modal-backdrop">
+  <div class="modal">
+    <h2>Build Image from Dockerfile</h2>
+    <form id="build-form">
+      <div class="modal-section">
+        <label>Context Directory</label>
+        <div class="input-row">
+          <input id="build-context" type="text" placeholder="/path/to/context" required>
+          <button type="button" class="btn" id="build-context-btn">Browse…</button>
+        </div>
+      </div>
+      <div class="modal-section">
+        <label>Dockerfile (optional)</label>
+        <div class="input-row">
+          <input id="build-dockerfile" type="text" placeholder="Default: Dockerfile in context">
+          <button type="button" class="btn" id="build-dockerfile-btn">Browse…</button>
+        </div>
+      </div>
+      <div class="modal-section">
+        <label>Image Tag</label>
+        <input id="build-tag" type="text" placeholder="e.g. myapp:latest (auto-generated if empty)">
+      </div>
+      <details style="margin-top:4px">
+        <summary style="cursor:pointer;font-size:12px;color:var(--text-secondary);user-select:none">Advanced Options</summary>
+        <div style="padding-top:12px;display:flex;flex-direction:column;gap:12px">
+          <div class="modal-section">
+            <label>Platform(s)</label>
+            <input id="build-platforms" type="text" placeholder="e.g. linux/arm64,linux/amd64">
+          </div>
+          <div class="modal-section">
+            <label>Target Stage</label>
+            <input id="build-target" type="text" placeholder="Build stage name">
+          </div>
+          <div class="modal-section">
+            <label>Build Arguments</label>
+            <div class="kv-list" id="build-args-list"></div>
+            <button type="button" class="add-row-btn" data-add-kv="build-args-list" data-placeholder="KEY=value">+ Add Arg</button>
+          </div>
+        </div>
+      </details>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="build-modal">Cancel</button>
+        <button type="submit" class="btn primary">Build</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Load images -->
+<div id="load-modal" class="modal-backdrop">
+  <div class="modal">
+    <h2>Load Images from Archive</h2>
+    <form id="load-form">
+      <div class="modal-section">
+        <label>Tar Archive</label>
+        <div class="input-row">
+          <input id="load-file" type="text" placeholder="/path/to/images.tar" required>
+          <button type="button" class="btn" id="load-file-btn">Browse…</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="load-modal">Cancel</button>
+        <button type="submit" class="btn primary">Load</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Save images -->
+<div id="save-modal" class="modal-backdrop">
+  <div class="modal">
+    <h2>Save Images as Archive</h2>
+    <form id="save-form">
+      <div class="modal-section">
+        <label>Image References (comma-separated)</label>
+        <input id="save-refs" type="text" placeholder="image1:tag,image2:tag" required>
+      </div>
+      <div class="modal-section">
+        <label>Output Path</label>
+        <div class="input-row">
+          <input id="save-output" type="text" placeholder="/path/to/output.tar" required>
+          <button type="button" class="btn" id="save-output-btn">Browse…</button>
+        </div>
+      </div>
+      <div class="modal-section">
+        <label>Platform (optional)</label>
+        <input id="save-platform" type="text" placeholder="e.g. linux/arm64">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="save-modal">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Run / Create container -->
+<div id="run-modal" class="modal-backdrop">
+  <div class="modal">
+    <h2>Create Container</h2>
+    <form id="run-form">
+      <div class="modal-section">
+        <label>Image Reference</label>
+        <div class="input-row">
+          <input id="run-image" type="text" placeholder="e.g. alpine:latest" required>
+          <button type="button" class="btn" id="run-image-picker">Pick…</button>
+        </div>
+      </div>
+      <div class="modal-section">
+        <label>Container Name (optional)</label>
+        <input id="run-name" type="text" placeholder="Auto-generated if empty">
+      </div>
+      <details style="margin-top:4px">
+        <summary style="cursor:pointer;font-size:12px;color:var(--text-secondary);user-select:none">Advanced Options</summary>
+        <div style="padding-top:12px;display:flex;flex-direction:column;gap:12px">
+          <div class="modal-section">
+            <label>Publish Ports</label>
+            <div class="kv-list" id="run-ports-list"></div>
+            <button type="button" class="add-row-btn" data-add-kv="run-ports-list" data-placeholder="hostPort:containerPort">+ Add Port</button>
+          </div>
+          <div class="modal-section">
+            <label>Environment Variables</label>
+            <div class="kv-list" id="run-envs-list"></div>
+            <button type="button" class="add-row-btn" data-add-kv="run-envs-list" data-placeholder="KEY=value">+ Add Env</button>
+          </div>
+          <div class="modal-section">
+            <label>Volumes</label>
+            <div class="kv-list" id="run-vols-list"></div>
+            <button type="button" class="add-row-btn" data-add-kv="run-vols-list" data-placeholder="volume:path">+ Add Volume</button>
+          </div>
+        </div>
+      </details>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="run-modal">Cancel</button>
+        <button type="submit" class="btn primary">Create &amp; Run</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Container detail -->
+<div id="detail-modal" class="modal-backdrop">
+  <div class="modal wide">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <h2 id="detail-name" style="font-family:monospace;font-size:14px"></h2>
+      <button type="button" class="btn" data-close="detail-modal">Close</button>
+    </div>
+    <div class="seg-control">
+      <button class="seg-btn active" data-seg="inspect">Inspect</button>
+      <button class="seg-btn" data-seg="logs">Logs</button>
+    </div>
+    <div id="detail-inspect" class="detail-section"></div>
+    <pre id="detail-logs" class="log-output" style="display:none"></pre>
+  </div>
+</div>
+
+<!-- Create volume -->
+<div id="volume-modal" class="modal-backdrop">
+  <div class="modal">
+    <h2>Create Volume</h2>
+    <form id="volume-form">
+      <div class="modal-section">
+        <label>Volume Name</label>
+        <input id="vol-name" type="text" placeholder="my-volume" required>
+      </div>
+      <div class="modal-section">
+        <label>Size (optional)</label>
+        <input id="vol-size" type="text" placeholder="e.g. 10G, 512M">
+        <span class="hint">Supports K, M, G, T, P suffixes</span>
+      </div>
+      <details style="margin-top:4px">
+        <summary style="cursor:pointer;font-size:12px;color:var(--text-secondary);user-select:none">Labels (optional)</summary>
+        <div style="padding-top:12px">
+          <div class="kv-list" id="vol-labels-list"></div>
+          <button type="button" class="add-row-btn" data-add-kv="vol-labels-list" data-placeholder="key=value">+ Add Label</button>
+        </div>
+      </details>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="volume-modal">Cancel</button>
+        <button type="submit" class="btn primary">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Settings -->
+<div id="settings-modal" class="modal-backdrop">
+  <div class="modal">
+    <h2>Settings</h2>
+    <form id="settings-form">
+      <div class="modal-section">
+        <label>Container Executable Path</label>
+        <div class="path-row">
+          <input id="exec-path" type="text" placeholder="/opt/homebrew/bin/container">
+          <button type="button" class="btn" id="exec-browse-btn">Browse…</button>
+        </div>
+        <div id="exec-status" class="exec-status"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="settings-modal">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Progress overlay -->
+<div id="progress-overlay">
+  <div class="progress-card">
+    <div class="spinner"></div>
+    <div id="progress-msg">Please wait…</div>
+  </div>
+</div>
+
+<!-- Error toast -->
+<div id="error-toast"></div>
+
+<script src="renderer/app.js"></script>
+</body>
 </html>

@@ -11,7 +11,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node", "electron"]
+    "types": ["node"]
   },
   "include": ["src/**/*"]
 }
