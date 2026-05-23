@@ -8,12 +8,17 @@
     "start": "npm run build && electron .",
     "dev": "npm run build && electron . --dev"
   },
-  "keywords": ["electron", "container", "macos"],
+  "keywords": [
+    "electron",
+    "container",
+    "macos"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@types/node": "25.9.1",
     "electron": "42.2.0",
-    "typescript": "6.0.3",
-    "@types/node": "25.9.1"
+    "electron-builder": "^26.8.1",
+    "typescript": "6.0.3"
   }
 }

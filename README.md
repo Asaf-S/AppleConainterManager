@@ -1,77 +1,103 @@
-# Apple Container Desktop — TypeScript/Electron Port
+# Apple Container Desktop
 
-TypeScript/Electron conversion of the original SwiftUI macOS app [AppleContainerDesktop](../AppleContainerDesktop-main).
+A TypeScript/Electron GUI for [Apple Container](https://github.com/apple/container) — a tool to create and run Linux containers as lightweight virtual machines on macOS.
 
-## Architecture
+This is a TypeScript rewrite of [AppleContainerDesktop](https://github.com/0Itsuki0/AppleContainerDesktop) by [0Itsuki0](https://github.com/0Itsuki0), originally written in Swift/SwiftUI. This version replaces the native macOS app with an Electron-based desktop app using TypeScript.
 
-| Layer | Swift Original | TypeScript Port |
-|---|---|---|
-| UI framework | SwiftUI | React 18 + Tailwind CSS |
-| State management | `@Observable` / `@Environment` | React Context |
-| Container SDK | ContainerClient Swift package | `container` CLI (shell-out) |
-| Desktop shell | macOS native | Electron |
-| Build | Xcode | electron-vite |
+> [!IMPORTANT]
+> Requires Apple Container [0.6.0](https://github.com/apple/container/releases/tag/0.6.0) or later.
+
+## Prerequisites
+
+- macOS (Apple Silicon or Intel)
+- [Apple Container](https://github.com/apple/container) installed at `/usr/local/bin/container`, or via `brew install --cask container`
+- [Node.js](https://nodejs.org/) (for running from source)
+
+## Running from Source
+
+```bash
+git clone https://github.com/Asaf-S/AppleConainterManager.git
+cd AppleConainterManager
+npm install
+npm start
+```
+
+For development mode:
+
+```bash
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+Compiles TypeScript to `dist/`.
+
+## Features
+
+### Images
+- Pull images from remote registries
+- Build images from a Dockerfile
+- Save images as OCI-compatible tar archives
+- Load images from OCI-compatible tar archives
+- Delete images
+- Inspect image metadata (OS, architecture, associated containers, etc.)
+
+### Containers
+- Create containers from local images or remote references
+- Set custom names, published ports, and environment variables
+- Start, stop, and delete containers
+- Inspect container status, ports, environment variables, and logs
+
+### Volumes
+- List volumes with metadata (size, source, associated containers)
+- Create and delete volumes
+- Mount volumes when creating containers
+
+### Settings
+- Configure path to the `container` executable
+- Set application data directory
+- Adjust timeouts for system start/stop and container stop
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Electron |
+| Language | TypeScript |
+| Renderer | Vanilla JS + CSS |
+| Container backend | Apple Container CLI |
 
 ## Project Structure
 
 ```
 src/
-├── main/                     # Electron main process (Node.js)
-│   ├── index.ts              # Window + tray setup
-│   ├── services/             # CLI wrappers (mirror Swift services)
-│   │   ├── cli.ts            # Base execFile wrapper
-│   │   ├── ContainerService.ts
-│   │   ├── ImageService.ts
-│   │   ├── VolumeService.ts
-│   │   └── SystemService.ts
-│   └── ipc/                  # IPC handler registration
-│       ├── containerHandlers.ts
-│       ├── imageHandlers.ts
-│       ├── volumeHandlers.ts
-│       └── systemHandlers.ts
-├── preload/
-│   └── index.ts              # contextBridge API exposed to renderer
-├── shared/
-│   └── types/                # Shared TypeScript interfaces
-│       ├── Container.ts      # ↔ ContainerDisplayModel.swift + ContainerManagement.swift
-│       ├── Image.ts          # ↔ ImageDisplayModel.swift
-│       ├── Volume.ts         # ↔ VolumeDisplayModel.swift
-│       ├── KeyValue.ts       # ↔ KeyValueModel.swift
-│       ├── common.ts         # Enums, Platform, PublishPort, UserSettings
-│       └── ipc.ts            # IPC channel type definitions
-└── renderer/                 # React UI
-    ├── App.tsx
-    ├── managers/
-    │   ├── ApplicationManager.tsx  # ↔ ApplicationManager.swift (@Observable)
-    │   └── UserSettingsManager.tsx # ↔ UserSettingsManager.swift (@Observable)
-    └── components/
-        ├── ContentView.tsx          # ↔ ContentView.swift + AppleContainerDesktopApp.swift
-        ├── SettingsView.tsx         # ↔ SettingsView.swift
-        ├── common/                  # ↔ Views/Components/
-        ├── Container/               # ↔ Views/Container/
-        ├── Image/                   # ↔ Views/Image/
-        └── Volume/                  # ↔ Views/Volume/
+  main.ts          # Electron main process
+  preload.ts       # Preload script (IPC bridge)
+  container-cli.ts # Apple Container CLI wrapper
+  types.ts         # Shared TypeScript types
+renderer/
+  app.js           # Renderer process UI logic
+  styles.css       # Styles
 ```
 
-## Prerequisites
+## Differences from the Swift Original
 
-- macOS with Apple Container installed (`/usr/local/bin/container`)
-- Node.js 20+
+1. **CLI instead of SDK** — The Swift app uses Apple's `ContainerClient` Swift package (internal gRPC/XPC). This version shells out to the `container` CLI binary and parses JSON output via `--format json`.
 
-## Getting Started
+2. **Cross-process IPC** — SwiftUI views call Swift services directly. Here the renderer calls the main process via Electron IPC.
 
-```bash
-npm install
-npm run dev        # Start in development mode (hot reload)
-npm run build      # Build for production
-```
+3. **No launchd integration** — System start/stop calls `launchctl bootstrap`/`bootout` directly, rather than using `ServiceManager` from `ContainerPlugin`.
 
-## Key Differences from Swift Original
+4. **Settings persistence** — Swift uses `UserDefaults`. This version stores settings as a JSON file in the app data directory.
 
-1. **CLI instead of SDK** — The Swift app uses Apple's `ContainerClient` Swift package (internal gRPC/XPC). The TypeScript version calls the `container` CLI binary and parses JSON output via `--format json`.
+## License
 
-2. **Cross-process IPC** — SwiftUI views call Swift services directly. Here the renderer (React) calls the main process (Node.js) via Electron IPC (`window.electron.*`).
+MIT
 
-3. **No launchd integration** — System start/stop uses `launchctl bootstrap`/`bootout` directly. The original Swift app uses `ServiceManager` from `ContainerPlugin`.
+## Credits
 
-4. **Settings persistence** — Swift uses `UserDefaults`. TypeScript uses `electron-store` (JSON file in app data directory).
+Original app by [0Itsuki0](https://github.com/0Itsuki0) — [AppleContainerDesktop](https://github.com/0Itsuki0/AppleContainerDesktop)
