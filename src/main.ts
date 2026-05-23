@@ -50,7 +50,7 @@ function registerIpcHandlers(): void {
       const data = await cli.getSystemStatus();
       return { success: true, data };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -61,7 +61,7 @@ function registerIpcHandlers(): void {
       sendProgress('System started.');
       return { success: true };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -72,7 +72,7 @@ function registerIpcHandlers(): void {
       sendProgress('System stopped.');
       return { success: true };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -82,7 +82,7 @@ function registerIpcHandlers(): void {
       const data = await cli.listContainers();
       return { success: true, data };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -92,7 +92,7 @@ function registerIpcHandlers(): void {
       await cli.startContainer(name);
       return { success: true };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -102,7 +102,7 @@ function registerIpcHandlers(): void {
       await cli.stopContainer(name);
       return { success: true };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -112,7 +112,7 @@ function registerIpcHandlers(): void {
       await cli.deleteContainers(names);
       return { success: true };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -122,7 +122,7 @@ function registerIpcHandlers(): void {
       await cli.runContainer(opts);
       return { success: true };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -131,7 +131,7 @@ function registerIpcHandlers(): void {
       const data = await cli.inspectContainer(name);
       return { success: true, data };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -140,7 +140,7 @@ function registerIpcHandlers(): void {
       const data = await cli.getContainerLogs(name);
       return { success: true, data };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -150,7 +150,7 @@ function registerIpcHandlers(): void {
       const data = await cli.listImages();
       return { success: true, data };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -160,7 +160,7 @@ function registerIpcHandlers(): void {
       await cli.pullImage(reference, platform, (d) => sendProgress(d.trim()));
       return { success: true };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -170,7 +170,7 @@ function registerIpcHandlers(): void {
       await cli.buildImage(opts, (d) => sendProgress(d.trim()));
       return { success: true };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -180,7 +180,7 @@ function registerIpcHandlers(): void {
       await cli.saveImages(opts);
       return { success: true };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -190,7 +190,7 @@ function registerIpcHandlers(): void {
       await cli.loadImages(tarPath, (d) => sendProgress(d.trim()));
       return { success: true };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -200,7 +200,7 @@ function registerIpcHandlers(): void {
       await cli.deleteImages(references);
       return { success: true };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -210,7 +210,7 @@ function registerIpcHandlers(): void {
       const data = await cli.listVolumes();
       return { success: true, data };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -220,7 +220,7 @@ function registerIpcHandlers(): void {
       await cli.createVolume(opts);
       return { success: true };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
@@ -230,7 +230,7 @@ function registerIpcHandlers(): void {
       await cli.deleteVolumes(names);
       return { success: true };
     } catch (e) {
-      return { success: false, error: String(e) };
+      return { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   });
 
